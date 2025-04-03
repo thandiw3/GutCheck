@@ -13,7 +13,7 @@ Classification: Train a Random Forest classifier to predict whether a sample is 
 Model Evaluation: Evaluate the model's performance using accuracy, precision, recall, and F1-score.
 
 ## Installation
-To install the package and its dependencies, follow these steps:
+To install the package and its dependencies, follow these steps:  
 git clone https://github.com/yourusername/microbiome-bmi-classifier.git  
 cd microbiome-bmi-classifier
 
