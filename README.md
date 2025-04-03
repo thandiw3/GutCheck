@@ -14,6 +14,6 @@ Model Evaluation: Evaluate the model's performance using accuracy, precision, re
 
 ## Installation
 To install the package and its dependencies, follow these steps:
-git clone https://github.com/yourusername/microbiome-bmi-classifier.git
+git clone https://github.com/yourusername/microbiome-bmi-classifier.git  
 cd microbiome-bmi-classifier
 
