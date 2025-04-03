@@ -1,7 +1,6 @@
 # Microbiome BMI Classifier
 This Python package is designed to classify individuals as Healthy or Obese based on microbiome data, specifically using OTU (Operational Taxonomic Unit) data along with associated BMI (Body Mass Index) labels. The tool integrates various data preprocessing, feature extraction, and machine learning models to provide a comprehensive solution for microbiome-based disease classification.
 
-Sure! Here's a simplified explanation of what the **Microbiome BMI Classifier** does:
 
 ### What is it?
 
