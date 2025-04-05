@@ -3,26 +3,15 @@ from setuptools import setup, find_packages
 setup(
     name='gutcheck',
     version='0.1.0',
-    description='A microbiome-based BMI classification tool using OTU tables and metadata.',
-    author='Gouri Anil',
-    author_email='gouri@umich.edu',
-    url='https://github.com/Gouri117/GutCheck',
     packages=find_packages(),
     install_requires=[
-        'pandas',
-        'numpy',
-        'scikit-learn',
+        'pandas', 
+        'scikit-learn', 
+        'argparse',  # Required for CLI
     ],
     entry_points={
         'console_scripts': [
-            'gutcheck=microbiome_bmi_classifier.cli:main',
+            'gutcheck=microbiome_bmi_classifier.cli:main',  # CLI entry point
         ],
     },
-    classifiers=[
-        'Programming Language :: Python :: 3',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
-    ],
-    python_requires='>=3.7',
 )
-
