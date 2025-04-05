@@ -4,8 +4,8 @@ setup(
     name='gutcheck',
     version='0.1.0',
     description='A microbiome-based BMI classification tool using OTU tables and metadata.',
-    author='Your Name',
-    author_email='your.email@example.com',
+    author='Gouri Anil',
+    author_email='gouri@umich.edu',
     url='https://github.com/Gouri117/GutCheck',
     packages=find_packages(),
     install_requires=[
