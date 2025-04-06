@@ -2,30 +2,30 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import numpy as np
 
-def load_data(otu_file=None, metadata_file=None):
-    if otu_file is None or metadata_file is None:
-        print("No data provided. Creating synthetic data...")
-        return create_synthetic_data()
+def load_data(otu_file, metadata_file):
+    print("Loading OTU and metadata files...")
 
-    otu_df = pd.read_csv(otu_file, index_col=0)
+    # Load OTU table with no header, and first column as SampleID
+    otu_df = pd.read_csv(otu_file, header=None)
+    otu_df.rename(columns={0: 'SampleID'}, inplace=True)
+    otu_df.set_index('SampleID', inplace=True)
+
+    # Assign default OTU column names
+    otu_df.columns = [f'OTU_{i+1}' for i in range(otu_df.shape[1])]
+
+    # Load metadata and use SampleID as index
     metadata_df = pd.read_csv(metadata_file)
+    metadata_df = metadata_df[['SampleID', 'BMI']]
+    metadata_df.set_index('SampleID', inplace=True)
 
-    merged_df = otu_df.merge(metadata_df, left_index=True, right_on='sampleid')
-    return merged_df
+    # Merge on SampleID
+    merged_data = otu_df.join(metadata_df, how='inner')
 
-def create_synthetic_data():
-    np.random.seed(42)
-    synthetic_otus = pd.DataFrame(
-        np.random.rand(100, 20), 
-        columns=[f"OTU_{i}" for i in range(20)]
-    )
-    synthetic_otus.index = [f"Sample_{i}" for i in range(100)]
-    metadata = pd.DataFrame({
-        "sampleid": synthetic_otus.index,
-        "BMI": np.random.normal(loc=25, scale=5, size=100)
-    })
-    merged = synthetic_otus.merge(metadata, left_index=True, right_on='sampleid')
-    return merged
+    # Create binary label
+    merged_data['Label'] = merged_data['BMI'].apply(lambda x: 1 if x >= 30 else 0)
+
+    print(f"Merged data shape: {merged_data.shape}")
+    return merged_data
 
 def preprocess_data(df):
     df = df.dropna()
