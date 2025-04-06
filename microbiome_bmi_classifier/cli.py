@@ -1,75 +1,42 @@
-import argparse
-import os
-from microbiome_bmi_classifier.data_preprocess import load_data, preprocess_data, split_data
-from microbiome_bmi_classifier.feature_extraction import extract_features
-from microbiome_bmi_classifier.classification import train_model, evaluate_model
+import pandas as pd
+from sklearn.model_selection import train_test_split
 from microbiome_bmi_classifier.synthetic_data import create_synthetic_data
-import pickle
 
-def main():
-    # Setup command line argument parser
-    parser = argparse.ArgumentParser(description="GutCheck: Microbiome-based classification tool")
-    
-    # Arguments for data processing and model training
-    parser.add_argument('--otu-file', type=str, help="OTU data file (CSV).")
-    parser.add_argument('--metadata-file', type=str, help="Metadata file (CSV).")
-    parser.add_argument('--output-dir', type=str, default='.', help="Directory to save the output files (default: current directory).")
-    parser.add_argument('--train', action='store_true', help="Train the model.")
-    parser.add_argument('--evaluate', action='store_true', help="Evaluate the model.")
-    parser.add_argument('--model-file', type=str, help="Path to the trained model for evaluation.")
-    parser.add_argument('--generate-synthetic', action='store_true', help="Generate synthetic data for testing purposes.")
-    
-    args = parser.parse_args()
+def load_data(otu_file=None, metadata_file=None):
+    if otu_file is None or metadata_file is None:
+        print("No data provided. Creating synthetic data...")
+        return create_synthetic_data()
 
-    # Handle synthetic data generation if no input files are provided
-    if args.generate_synthetic:
-        print("Generating synthetic data...")
-        data = create_synthetic_data()
-    elif args.otu_file and args.metadata_file:
-        print(f"Loading OTU data from {args.otu_file} and metadata from {args.metadata_file}...")
-        data = load_data(args.otu_file, args.metadata_file)
-    else:
-        print("Error: Please provide either input files or use --generate-synthetic.")
-        return
+    print("Loading real data...")
 
-    # Preprocessing step
-    print("Preprocessing the data...")
-    data = preprocess_data(data)
+    # Load OTU table with no header row and set SampleID as index
+    otu_df = pd.read_csv(otu_file, header=None)
+    sample_ids = otu_df.iloc[:, 0]
+    otu_data = otu_df.iloc[:, 1:]
+    otu_data.columns = [f'OTU_{i+1}' for i in range(otu_data.shape[1])]
+    otu_data.index = sample_ids
+    otu_data.index.name = "SampleID"
 
-    # Feature extraction
-    print("Extracting features from the data...")
-    features = extract_features(data)
+    # Load metadata
+    metadata = pd.read_csv(metadata_file)
+    metadata.set_index("SampleID", inplace=True)
 
-    # Split data into train and test sets
-    X_train, X_test, y_train, y_test = split_data(features)
+    # Merge data on SampleID
+    merged_data = otu_data.join(metadata, how="inner")
 
-    # Training the model if --train flag is set
-    if args.train:
-        print("Training the model...")
-        model = train_model(X_train, y_train)
+    # Add Label: 1 if BMI >= 30 (Obese), else 0 (Healthy)
+    merged_data["Label"] = merged_data["BMI"].apply(lambda x: 1 if x >= 30 else 0)
 
-        # Save trained model
-        model_file = os.path.join(args.output_dir, 'trained_model.pkl')
-        with open(model_file, 'wb') as f:
-            pickle.dump(model, f)
-        print(f"Model trained and saved to {model_file}")
+    # Explicitly cast the Label column to integers to ensure it is binary
+    merged_data["Label"] = merged_data["Label"].astype(int)
 
-    # Evaluate the model if --evaluate flag is set
-    if args.evaluate:
-        if not args.model_file:
-            print("Error: Please provide the model file path with --model-file for evaluation.")
-            return
+    return merged_data
 
-        print(f"Evaluating the model from {args.model_file}...")
-        with open(args.model_file, 'rb') as f:
-            model = pickle.load(f)
-        
-        evaluation_results = evaluate_model(model, X_test, y_test)
-        print(f"Evaluation Results: {evaluation_results}")
-        # Optionally save evaluation results to a file
-        with open(os.path.join(args.output_dir, 'evaluation_results.txt'), 'w') as f:
-            f.write(str(evaluation_results))
-        print(f"Evaluation results saved to {os.path.join(args.output_dir, 'evaluation_results.txt')}")
+def preprocess_data(data):
+    print("Preprocessing data...")
+    return data.dropna()
 
-if __name__ == "__main__":
-    main()
+def split_data(data):
+    X = data.drop(columns=["Label"])
+    y = data["Label"]
+    return train_test_split(X, y, test_size=0.2, random_state=42)
