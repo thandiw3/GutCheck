@@ -11,12 +11,17 @@ def preprocess_data(data):
     
     return scaled_data
 
-def split_data(data):
-    # Split the data into train and test sets
-    X = data.drop(columns=["BMI", "Label"])  # Features (OTUs)
-    y = data[["BMI", "Label"]]  # Target (BMI and Label)
+def split_data(features, labels):
+    """
+    Splits the dataset into training and testing sets.
     
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    Parameters:
+    features (pd.DataFrame): The feature matrix.
+    labels (pd.Series): The target labels.
     
+    Returns:
+    tuple: X_train, X_test, y_train, y_test
+    """
+    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
     return X_train, X_test, y_train, y_test
 
