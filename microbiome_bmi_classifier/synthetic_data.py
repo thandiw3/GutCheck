@@ -1,31 +1,35 @@
 import pandas as pd
 import numpy as np
 
-def create_synthetic_data(num_samples=100, num_otus=50):
-    np.random.seed(42)
-    sample_ids = [f"Sample_{i+1}" for i in range(num_samples)]
-    otu_data = np.random.rand(num_samples, num_otus)
-
-    otu_df = pd.DataFrame(otu_data, columns=[f"OTU_{i+1}" for i in range(num_otus)])
-    otu_df["SampleID"] = sample_ids
-    otu_df.set_index("SampleID", inplace=True)
-
-    # Generate synthetic BMI values (normally distributed with mean=25 and std=5)
-    bmi_values = np.random.normal(loc=25, scale=5, size=num_samples)
-
-    # Create labels: 1 for obese (BMI >= 30), 0 for healthy (BMI < 30)
-    labels = (bmi_values >= 30).astype(int)
-
-    # Combine BMI values and labels into a metadata DataFrame
-    metadata = pd.DataFrame({
-        "BMI": bmi_values,
-        "Label": labels  # 1 for obese, 0 for healthy
-    }, index=otu_df.index)
-
-    # Combine OTU data and metadata
-    data = pd.concat([otu_df, metadata], axis=1)
+def generate_synthetic_data(min_samples=10, max_samples=1000, num_features=100):
+    """
+    Generate synthetic microbiome data for classification.
+    The number of samples generated will be random between min_samples and max_samples.
+    Each time this function is called, new random data is generated.
+    """
+    # Randomly choose a number of samples between min_samples and max_samples
+    num_samples = np.random.randint(min_samples, max_samples + 1)
     
+    print(f"Generating {num_samples} synthetic samples with {num_features} OTU features...")
+
+    # Generate random OTU data: num_samples x num_features matrix
+    otus = np.random.rand(num_samples, num_features)
+    
+    # Generate random BMI values between 18 and 35 (for example)
+    bmi_values = np.random.uniform(18, 35, size=num_samples)
+    
+    # Generate random Labels (0 or 1 for healthy or obese)
+    labels = np.random.choice([0, 1], size=num_samples)
+    
+    # Create the DataFrame
+    data = pd.DataFrame(otus, columns=[f"OTU_{i+1}" for i in range(num_features)])
+    data['BMI'] = bmi_values
+    data['Label'] = labels
+    data['SampleID'] = [f"S{i+1}" for i in range(num_samples)]  # Sample IDs
+    
+    # Return the DataFrame
     return data
+
 
 
 
