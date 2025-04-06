@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-from data_processing import load_data, preprocess_data, split_data
+from .data_processing import load_data, preprocess_data, split_data
 from feature_extraction import extract_features
 from classification import train_model, evaluate_model, cross_validate_model
 from synthetic_data import create_synthetic_data
