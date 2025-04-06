@@ -2,19 +2,11 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
-def extract_features(input_file, output_file):
-    """
-    Extract features from the input data and save the result to an output file.
-    """
-    # Load the raw microbiome data (abundance counts)
-    data = pd.read_csv(input_file, index_col=0)
-
+def extract_features(data):
     # Assuming data has 'SampleID' as index and OTUs as columns
     print(f"Data columns: {data.columns}")
 
     # Calculate diversity indices (e.g., Shannon, Simpson, Richness)
-    # Shannon Index (H) = -sum(p * log(p)) for each OTU in a sample
-    # Simpson Index (D) = 1 - sum(p^2) for each OTU in a sample
     shannon_index = data.apply(lambda x: -np.sum(x * np.log(x + 1e-6)), axis=1)
     simpson_index = data.apply(lambda x: 1 - np.sum(x**2), axis=1)
     richness = data.apply(lambda x: np.count_nonzero(x > 0), axis=1)
@@ -34,6 +26,4 @@ def extract_features(input_file, output_file):
     # Append the OTU abundances to the feature set
     features_final = pd.concat([features_scaled_df, data], axis=1)
 
-    # Save the extracted features to a CSV file
-    features_final.to_csv(output_file)
-    print(f"Feature extraction complete. Features saved to {output_file}")
+    return features_final
