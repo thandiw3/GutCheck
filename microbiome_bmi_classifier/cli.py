@@ -17,7 +17,7 @@ def main():
     if args.generate_synthetic:
         # Generate synthetic data with dynamic sample size
         print("Generating synthetic data...")
-        data = generate_synthetic_data(min_samples=10, max_samples=100, num_features=50)  # Adjust as needed
+        data = generate_synthetic_data(min_samples=10, max_samples=1000, num_features=100)  # Adjust as needed
         
         # Save data to the output directory
         output_file = os.path.join(args.output_dir, "synthetic_data.csv")
