@@ -1,6 +1,5 @@
 import argparse
 import os
-import pandas as pd
 from feature_extraction import extract_features
 from data_processing import load_data, preprocess_data, split_data
 from synthetic_data import create_synthetic_data
@@ -62,6 +61,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
