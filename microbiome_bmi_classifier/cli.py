@@ -1,9 +1,9 @@
 import sys
 import os
 import argparse
-from synthetic_data import generate_synthetic_data
-from feature_extraction import extract_features
-from classification import train_model, evaluate_model
+from .synthetic_data import generate_synthetic_data
+from .feature_extraction import extract_features
+from .classification import train_model, evaluate_model
 
 def main():
     parser = argparse.ArgumentParser(description="GutCheck: Microbiome Classification Tool")
