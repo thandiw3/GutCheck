@@ -1,8 +1,8 @@
 import argparse
-from synthetic_data import create_synthetic_data
-from feature_extraction import extract_features
-from data_processing import preprocess_data, split_data
-from classification import train_model, evaluate_model, cross_validate_model
+from .synthetic_data import create_synthetic_data
+from .feature_extraction import extract_features
+from .data_processing import preprocess_data, split_data
+from .classification import train_model, evaluate_model, cross_validate_model
 
 def main():
     # Create argument parser
