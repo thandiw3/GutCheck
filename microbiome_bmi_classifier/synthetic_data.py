@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 
 def create_synthetic_data(num_samples=100, num_otus=50):
+    """
+    Generate synthetic microbiome data along with BMI values.
+    """
     np.random.seed(42)
     sample_ids = [f"Sample_{i+1}" for i in range(num_samples)]
     otu_data = np.random.rand(num_samples, num_otus)
@@ -22,4 +25,5 @@ def create_synthetic_data(num_samples=100, num_otus=50):
     data = pd.concat([otu_df, metadata], axis=1)
     
     return data
+
 
