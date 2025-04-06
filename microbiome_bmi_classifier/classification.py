@@ -1,44 +1,95 @@
-import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
-from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import accuracy_score
+import numpy as np
 
-def classify_features(input_file, output_model_file):
-    # Load the extracted features and labels
-    data = pd.read_csv(input_file, index_col=0)
-
-    # Assuming 'BMI_Category' is the label column and other columns are features
-    X = data.drop(columns=['BMI_Category'])
-    y = data['BMI_Category']
-
-    # Encode labels (if they're categorical)
-    le = LabelEncoder()
-    y_encoded = le.fit_transform(y)
-
-    # Split the data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
-
-    # Train a Random Forest Classifier
-    clf = RandomForestClassifier(n_estimators=100, random_state=42)
-    clf.fit(X_train, y_train)
-
-    # Predict the labels on the test set
-    y_pred = clf.predict(X_test)
-
-    # Evaluate the model
-    accuracy = accuracy_score(y_test, y_pred)
-    print(f"Accuracy: {accuracy:.2f}")
-    print(f"Classification Report:\n{classification_report(y_test, y_pred)}")
-
-    # Save the trained model
-    import joblib
-    joblib.dump(clf, output_model_file)
-    print(f"Model saved to {output_model_file}")
-
-if __name__ == "__main__":
-    # Specify the input file (feature-extracted data) and output model file
-    input_file = 'extracted_features.csv'
-    output_model_file = 'trained_model.joblib'
+def train_model(X_train, y_train, model_type='logistic'):
+    """
+    Train the model using the specified model type.
+    :param X_train: Training feature matrix.
+    :param y_train: Training labels.
+    :param model_type: Type of model to train ('logistic' or 'rf' for Random Forest).
+    :return: Trained model.
+    """
+    print(f"Training {model_type} model...")
     
-    classify_features(input_file, output_model_file)
+    if model_type == 'logistic':
+        model = LogisticRegression(max_iter=1000)
+    elif model_type == 'rf':
+        model = RandomForestClassifier(n_estimators=100, random_state=42)
+    else:
+        raise ValueError(f"Unsupported model type: {model_type}")
+    
+    model.fit(X_train, y_train)
+    return model
+
+def evaluate_model(model, X_test, y_test):
+    """
+    Evaluate the model on the test data and return evaluation metrics.
+    :param model: The trained model to evaluate.
+    :param X_test: Test feature matrix.
+    :param y_test: True labels for the test data.
+    :return: Evaluation results (accuracy and classification report).
+    """
+    print("Evaluating the model...")
+
+    # Predict on the test data
+    y_pred = model.predict(X_test)
+    
+    # Calculate accuracy score
+    accuracy = accuracy_score(y_test, y_pred)
+
+    # Generate classification report
+    report = classification_report(y_test, y_pred, target_names=["Healthy", "Obese"])
+    
+    # Confusion matrix
+    cm = confusion_matrix(y_test, y_pred)
+    
+    print("Accuracy:", accuracy)
+    print("Classification Report:")
+    print(report)
+    print("Confusion Matrix:")
+    print(cm)
+
+    return {
+        "accuracy": accuracy,
+        "classification_report": report,
+        "confusion_matrix": cm
+    }
+
+def cross_validate_model(X, y, model_type='logistic', cv_folds=5):
+    """
+    Perform cross-validation to evaluate the model's performance.
+    :param X: Feature matrix.
+    :param y: Labels.
+    :param model_type: Model type ('logistic' or 'rf').
+    :param cv_folds: Number of folds for cross-validation.
+    :return: Cross-validation results (mean accuracy).
+    """
+    print(f"Performing {cv_folds}-fold cross-validation...")
+    
+    model = train_model(X, y, model_type)
+    
+    # Use StratifiedKFold to ensure the data is split in a way that preserves the label distribution
+    skf = StratifiedKFold(n_splits=cv_folds)
+    accuracies = []
+
+    for train_idx, test_idx in skf.split(X, y):
+        X_train, X_test = X[train_idx], X[test_idx]
+        y_train, y_test = y[train_idx], y[test_idx]
+        
+        # Train the model on the training split
+        model.fit(X_train, y_train)
+        
+        # Predict on the test split
+        y_pred = model.predict(X_test)
+        
+        # Calculate the accuracy for this fold
+        accuracy = accuracy_score(y_test, y_pred)
+        accuracies.append(accuracy)
+
+    mean_accuracy = np.mean(accuracies)
+    print(f"Mean accuracy from cross-validation: {mean_accuracy:.4f}")
+    return mean_accuracy
