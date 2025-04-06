@@ -1,19 +1,12 @@
 import pandas as pd
-<<<<<<< HEAD
 from .feature_extraction import extract_features
 from .data_processing import load_data, preprocess_data, split_data
 from .synthetic_data import create_synthetic_data
 from .classification import train_model, evaluate_model, cross_validate_model
-=======
-import numpy as np
-from feature_extraction import extract_features
-from classification import train_model, evaluate_model
-from synthetic_data import create_synthetic_data
->>>>>>> 161eae50aceffc801166c045798e5cdc01a704c4
 
 def main():
     # Check if synthetic data should be generated
-    generate_synthetic = True  # You can replace this with argument parsing
+    generate_synthetic = True  # You can replace this with argument parsing logic
 
     if generate_synthetic:
         print("Generating synthetic data...")
@@ -28,8 +21,11 @@ def main():
         print(f"Synthetic data saved to {output_file}")
 
     # After generating and saving synthetic data, proceed with other tasks
+    print("Extracting features from synthetic data...")
     extract_features('synthetic_data.csv', 'extracted_features.csv')  # Extract features from synthetic data
+    print("Training the model...")
     train_model('extracted_features.csv')  # Train your model (implement the logic)
+    print("Evaluating the model...")
     evaluate_model('extracted_features.csv')  # Evaluate your model (implement the logic)
 
 if __name__ == "__main__":
