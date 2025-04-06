@@ -34,3 +34,4 @@ def extract_features(input_file, output_file):
     # Save the extracted features to a CSV file
     features_final.to_csv(output_file)
     print(f"Feature extraction complete. Features saved to {output_file}")
+
