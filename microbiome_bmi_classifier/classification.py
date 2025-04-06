@@ -69,7 +69,7 @@ def cross_validate_model(X, y, model_type='logistic', cv_folds=5):
     :return: Cross-validation results (mean accuracy).
     """
     print(f"Performing {cv_folds}-fold cross-validation...")
-    
+
     model = train_model(X, y, model_type)
     
     # Use StratifiedKFold to ensure the data is split in a way that preserves the label distribution
@@ -93,3 +93,4 @@ def cross_validate_model(X, y, model_type='logistic', cv_folds=5):
     mean_accuracy = np.mean(accuracies)
     print(f"Mean accuracy from cross-validation: {mean_accuracy:.4f}")
     return mean_accuracy
+
