@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--model-file', type=str, help="Path to the trained model for evaluation.")
     parser.add_argument('--generate-synthetic', action='store_true', help="Generate synthetic data for testing purposes.")
     
+    # Parse arguments
     args = parser.parse_args()
 
     # Handle synthetic data generation if no input files are provided
@@ -37,11 +38,12 @@ def main():
     data = preprocess_data(data)
 
     # Feature extraction
-    print("Extracting features from the data...")
-    features = extract_features(data)
+    output_file = os.path.join(args.output_dir, 'features.csv')  # Set output file path
+    print(f"Extracting features from the data and saving to {output_file}...")
+    extract_features(data, output_file)  # Pass the output file as argument
 
     # Split data into train and test sets
-    X_train, X_test, y_train, y_test = split_data(features)
+    X_train, X_test, y_train, y_test = split_data(data)
 
     # Training the model if --train flag is set
     if args.train:
@@ -73,4 +75,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
