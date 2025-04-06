@@ -1,9 +1,8 @@
 import argparse
-import os
-from .synthetic_data import create_synthetic_data
-from .feature_extraction import extract_features
-from .data_processing import preprocess_data, split_data
-from .classification import train_model, evaluate_model, cross_validate_model
+from synthetic_data import create_synthetic_data
+from feature_extraction import extract_features
+from data_processing import preprocess_data, split_data
+from classification import train_model, evaluate_model, cross_validate_model
 
 def main():
     # Create argument parser
@@ -22,7 +21,12 @@ def main():
     # Step 1: Generate synthetic data
     if args.generate_synthetic:
         print("Generating synthetic data...")
-        data = create_synthetic_data()
+        data = create_synthetic_data()  # Generate synthetic data
+
+    # Ensure data is created before proceeding
+    if 'data' not in locals():
+        print("Error: Data was not generated.")
+        return
 
     # Step 2: Extract features from synthetic data
     print("Extracting features...")
@@ -31,7 +35,9 @@ def main():
     # Step 3: Preprocess the features
     print("Preprocessing data...")
     X = preprocess_data(features)
-    y = data[["Label"]]  # Only label for now
+
+    # Ensure binary encoding of labels
+    y = data[["Label"]].astype(int)  # Ensure labels are integers (binary 0/1)
 
     # Step 4: Split data into training and testing sets
     print("Splitting data into training and testing sets...")
@@ -53,7 +59,4 @@ def main():
         cross_validate_model(model, X, y)
 
 if __name__ == "__main__":
-    main()
-
-if __name__ == '__main__':
     main()
