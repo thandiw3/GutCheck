@@ -27,6 +27,9 @@ def load_data(otu_file=None, metadata_file=None):
     # Add Label: 1 if BMI >= 30 (Obese), else 0 (Healthy)
     merged_data["Label"] = merged_data["BMI"].apply(lambda x: 1 if x >= 30 else 0)
 
+    # Explicitly cast the Label column to integers to ensure it is binary
+    merged_data["Label"] = merged_data["Label"].astype(int)
+
     return merged_data
 
 def preprocess_data(data):
@@ -37,5 +40,3 @@ def split_data(data):
     X = data.drop(columns=["Label"])
     y = data["Label"]
     return train_test_split(X, y, test_size=0.2, random_state=42)
-
-
