@@ -1,10 +1,10 @@
 import os
 import sys
 import argparse
-from microbiome_bmi_classifier.data_preprocess import load_data, preprocess_data, split_data
-from microbiome_bmi_classifier.feature_extraction import extract_features
-from microbiome_bmi_classifier.model import train_model, evaluate_model, save_model
-from microbiome_bmi_classifier.synthetic_data import generate_synthetic_data
+from data_processing import load_data, preprocess_data, split_data
+from feature_extraction import extract_features
+from classification import train_model, evaluate_model, cross_validate_model
+from synthetic_data import create_synthetic_data
 
 def main():
     parser = argparse.ArgumentParser(description="GutCheck: Microbiome BMI Classifier")
@@ -13,6 +13,9 @@ def main():
     parser.add_argument('--otu-file', type=str, help="OTU data file (CSV). If not provided, synthetic data will be generated.")
     parser.add_argument('--metadata-file', type=str, help="Metadata file (CSV). If not provided, synthetic data will be generated.")
     parser.add_argument('--output-dir', type=str, default='.', help="Directory to save output files.")
+    parser.add_argument('--cross-validate', action='store_true', help="Perform cross-validation.")
+    parser.add_argument('--evaluate', action='store_true', help="Evaluate the trained model on test data.")
+    parser.add_argument('--model-file', type=str, help="Path to the trained model for evaluation.")
     
     args = parser.parse_args()
 
@@ -25,7 +28,7 @@ def main():
     else:
         print("Generating synthetic data...")
         # Generate synthetic data for testing
-        otu_data, metadata = generate_synthetic_data()
+        otu_data, metadata = create_synthetic_data()
 
     # Preprocess data
     print("Preprocessing data...")
@@ -39,17 +42,36 @@ def main():
     print("Extracting features...")
     features = extract_features(data)
 
-    # Train the model (default)
+    # If cross-validation is enabled, perform it
+    if args.cross_validate:
+        print("Performing cross-validation...")
+        model = train_model(features, train_data["BMI"])  # Assuming 'BMI' is the label column
+        cv_scores = cross_validate_model(model, features, train_data["BMI"])
+        print(f"Cross-validation scores: {cv_scores}")
+        return
+
+    # Train the model
     print("Training the model...")
-    model = train_model(features)
+    model = train_model(features, train_data["BMI"])
 
     # Save the trained model
     print(f"Saving model to {args.output_dir}...")
     model_file = os.path.join(args.output_dir, 'trained_model.pkl')
-    save_model(model, model_file)
+    joblib.dump(model, model_file)
 
-    print(f"Model training completed and saved to {model_file}")
-    print("Process finished successfully!")
+    # If evaluate flag is set, evaluate the model on test data
+    if args.evaluate and args.model_file:
+        print(f"Evaluating model from {args.model_file}...")
+        model = joblib.load(args.model_file)
+        test_features = extract_features(test_data)
+        accuracy = evaluate_model(model, test_features, test_data["BMI"])
+        print(f"Model accuracy on test data: {accuracy}")
+
+    print(f"Process finished successfully!")
+
+if __name__ == '__main__':
+    main()
+
 
 if __name__ == '__main__':
     main()
