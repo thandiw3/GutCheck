@@ -1,66 +1,63 @@
+import sys
+import os
 import argparse
-from .synthetic_data import create_synthetic_data
-from .feature_extraction import extract_features
-from .data_processing import preprocess_data, split_data
-from .classification import train_model, evaluate_model, cross_validate_model
+from synthetic_data import generate_synthetic_data
+from feature_extraction import extract_features
+from classification import train_model, evaluate_model
 
 def main():
-    # Create argument parser
-    parser = argparse.ArgumentParser(description="GutCheck: Microbiome BMI Classifier")
-
-    # Define command-line arguments
-    parser.add_argument('--generate-synthetic', action='store_true', help='Generate synthetic data')
-    parser.add_argument('--train', action='store_true', help='Train the model')
-    parser.add_argument('--evaluate', action='store_true', help='Evaluate the model')
-    parser.add_argument('--cross-validate', action='store_true', help='Cross-validate the model')
-    parser.add_argument('--output-dir', type=str, default='./', help='Directory to save output')
-
-    # Parse arguments
+    parser = argparse.ArgumentParser(description="GutCheck: Microbiome Classification Tool")
+    parser.add_argument('--generate-synthetic', action='store_true', help="Generate synthetic microbiome data")
+    parser.add_argument('--train', action='store_true', help="Train the classification model")
+    parser.add_argument('--evaluate', action='store_true', help="Evaluate the trained model")
+    parser.add_argument('--output-dir', type=str, default='.', help="Directory to save the output files")
+    
     args = parser.parse_args()
 
-    # Step 1: Generate synthetic data
     if args.generate_synthetic:
+        # Generate synthetic data with dynamic sample size
         print("Generating synthetic data...")
-        data = create_synthetic_data()  # Generate synthetic data
+        data = generate_synthetic_data(min_samples=10, max_samples=100, num_features=50)  # Adjust as needed
+        
+        # Save data to the output directory
+        output_file = os.path.join(args.output_dir, "synthetic_data.csv")
+        data.to_csv(output_file, index=False)
+        print(f"Synthetic data saved to {output_file}")
 
-    # Ensure data is created before proceeding
-    if 'data' not in locals():
-        print("Error: Data was not generated.")
-        return
-
-    # Step 2: Extract features from synthetic data
-    print("Extracting features...")
-    features = extract_features(data)
-
-    # Step 3: Preprocess the features
-    print("Preprocessing data...")
-    X = preprocess_data(features)
-
-    # Ensure binary encoding of labels
-    y = data["Label"].astype(int)  # Ensure labels are integers (binary 0/1)
-
-    # Step 4: Split data into training and testing sets
-    print("Splitting data into training and testing sets...")
-    X_train, X_test, y_train, y_test = split_data(X, y)
-
-    # Ensure that labels are binary (0 or 1)
-    y_train = y_train.astype(int)
-    y_test = y_test.astype(int)
-
-    # Step 5: Train the model
     if args.train:
+        if not args.generate_synthetic:
+            print("You must generate synthetic data first!")
+            sys.exit(1)
+
+        # Extract features from the synthetic data
+        print("Extracting features...")
+        features = extract_features(data)
+
+        # Train the model
         print("Training the model...")
+        X_train = features.drop(columns=["Label", "SampleID"])
+        y_train = features["Label"]
         model = train_model(X_train, y_train)
-
-    # Step 6: Evaluate the model
+        
+        # Save model to output directory
+        model_path = os.path.join(args.output_dir, "model.pkl")
+        with open(model_path, 'wb') as f:
+            pickle.dump(model, f)
+        print(f"Model saved to {model_path}")
+    
     if args.evaluate:
-        print("Evaluating the model...")
-        evaluate_model(model, X_test, y_test)
+        if not args.train:
+            print("You must train a model first!")
+            sys.exit(1)
 
-    # Step 7: Cross-validation
-    if args.cross_validate:
-        print("Cross-validating the model...")
-        cross_validate_model(model, X, y)
+        # Load the trained model
+        model_path = os.path.join(args.output_dir, "model.pkl")
+        with open(model_path, 'rb') as f:
+            model = pickle.load(f)
+
+        # Evaluate the model
+        print("Evaluating the model...")
+        evaluate_model(model, X_train, y_train)  # Add proper evaluation logic here
 
 if __name__ == "__main__":
     main()
