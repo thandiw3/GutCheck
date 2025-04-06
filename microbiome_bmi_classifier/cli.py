@@ -1,9 +1,10 @@
 import argparse
 import os
-from .feature_extraction import extract_features
-from .data_processing import load_data, preprocess_data, split_data
-from .synthetic_data import create_synthetic_data
-from .classification import train_model, evaluate_model, cross_validate_model
+import pandas as pd
+from feature_extraction import extract_features
+from data_processing import load_data, preprocess_data, split_data
+from synthetic_data import create_synthetic_data
+from classification import train_model, evaluate_model, cross_validate_model
 
 def main():
     # Set up argument parser
@@ -24,9 +25,14 @@ def main():
     # Check if synthetic data needs to be generated
     if args.generate_synthetic:
         print("Generating synthetic data...")
-        data = create_synthetic_data()
-        output_file = os.path.join(args.output_dir, 'features.csv')
-        extract_features(data, output_file)
+        data = create_synthetic_data()  # Generates synthetic data (OTU and metadata combined)
+        output_file = os.path.join(args.output_dir, 'synthetic_data.csv')
+        data.to_csv(output_file)  # Save the synthetic data to CSV
+
+        print(f"Synthetic data saved to {output_file}")
+
+        # Now extract features from the saved file
+        extract_features(output_file, os.path.join(args.output_dir, 'features.csv'))
 
     # Otherwise, use the provided OTU and metadata files
     elif args.otu_file and args.metadata_file:
@@ -56,5 +62,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
