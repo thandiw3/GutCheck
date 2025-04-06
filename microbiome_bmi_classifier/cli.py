@@ -37,11 +37,15 @@ def main():
     X = preprocess_data(features)
 
     # Ensure binary encoding of labels
-    y = data[["Label"]].astype(int)  # Ensure labels are integers (binary 0/1)
+    y = data["Label"].astype(int)  # Ensure labels are integers (binary 0/1)
 
     # Step 4: Split data into training and testing sets
     print("Splitting data into training and testing sets...")
-    X_train, X_test, y_train, y_test = split_data(features)
+    X_train, X_test, y_train, y_test = split_data(X, y)
+
+    # Ensure that labels are binary (0 or 1)
+    y_train = y_train.astype(int)
+    y_test = y_test.astype(int)
 
     # Step 5: Train the model
     if args.train:
