@@ -1,67 +1,59 @@
 import argparse
 import os
-from .synthetic_data import create_synthetic_data
-from .data_processing import load_data, preprocess_data
-from .feature_extraction import extract_features
-from .classification import train_model, evaluate_model, cross_validate_model
+from synthetic_data import create_synthetic_data
+from feature_extraction import extract_features
+from data_processing import preprocess_data, split_data
+from classification import train_model, evaluate_model, cross_validate_model
 
 def main():
-    # Argument parsing
-    parser = argparse.ArgumentParser(description="Microbiome BMI Classifier")
+    # Create argument parser
+    parser = argparse.ArgumentParser(description="GutCheck: Microbiome BMI Classifier")
 
-    # Options for generating synthetic data
-    parser.add_argument('--generate-synthetic', action='store_true', help="Generate synthetic data for testing purposes.")
-    
-    # Options for loading real data
-    parser.add_argument('--otu-file', type=str, help="OTU data file (CSV).")
-    parser.add_argument('--metadata-file', type=str, help="Metadata file (CSV).")
+    # Define command-line arguments
+    parser.add_argument('--generate-synthetic', action='store_true', help='Generate synthetic data')
+    parser.add_argument('--train', action='store_true', help='Train the model')
+    parser.add_argument('--evaluate', action='store_true', help='Evaluate the model')
+    parser.add_argument('--cross-validate', action='store_true', help='Cross-validate the model')
+    parser.add_argument('--output-dir', type=str, default='./', help='Directory to save output')
 
-    # Model training and evaluation options
-    parser.add_argument('--train', action='store_true', help="Train the model.")
-    parser.add_argument('--evaluate', action='store_true', help="Evaluate the model.")
-    parser.add_argument('--model-file', type=str, help="Path to the trained model for evaluation.")
-    parser.add_argument('--cross-validate', action='store_true', help="Perform cross-validation on the model.")
-
-    parser.add_argument('--output-dir', type=str, default='.', help="Directory to save the output files (default: current directory).")
-    parser.add_argument('--output-file', type=str, default="features.csv", help="Output file for feature extraction.")
-    
+    # Parse arguments
     args = parser.parse_args()
 
-    # Process synthetic or real data
+    # Step 1: Generate synthetic data
     if args.generate_synthetic:
         print("Generating synthetic data...")
         data = create_synthetic_data()
-    elif args.otu_file and args.metadata_file:
-        print(f"Loading data from {args.otu_file} and {args.metadata_file}...")
-        data = load_data(args.otu_file)
-        metadata = load_data(args.metadata_file)
-        data = preprocess_data(data)
-        data = pd.concat([data, metadata], axis=1)
-    else:
-        print("Error: Either synthetic data generation or OTU and metadata files must be provided.")
-        return
 
-    # Feature extraction
+    # Step 2: Extract features from synthetic data
     print("Extracting features...")
-    extract_features(data, args.output_file)
+    features = extract_features(data)
 
-    # Train model if requested
+    # Step 3: Preprocess the features
+    print("Preprocessing data...")
+    X = preprocess_data(features)
+    y = data[["Label"]]  # Only label for now
+
+    # Step 4: Split data into training and testing sets
+    print("Splitting data into training and testing sets...")
+    X_train, X_test, y_train, y_test = split_data(features)
+
+    # Step 5: Train the model
     if args.train:
         print("Training the model...")
-        train_model(args.output_file, 'trained_model.pkl')
+        model = train_model(X_train, y_train)
 
-    # Evaluate the model if requested
+    # Step 6: Evaluate the model
     if args.evaluate:
         print("Evaluating the model...")
-        if not args.model_file:
-            print("Error: Please provide a model file for evaluation.")
-            return
-        evaluate_model(args.output_file, args.model_file)
+        evaluate_model(model, X_test, y_test)
 
-    # Cross-validation if requested
+    # Step 7: Cross-validation
     if args.cross_validate:
-        print("Performing cross-validation...")
-        cross_validate_model(args.output_file)
+        print("Cross-validating the model...")
+        cross_validate_model(model, X, y)
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == '__main__':
     main()
