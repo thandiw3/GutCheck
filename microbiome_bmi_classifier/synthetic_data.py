@@ -18,8 +18,8 @@ def create_synthetic_data(num_samples=100, num_otus=50):
         "Label": labels
     }, index=otu_df.index)
 
-    # Combine OTU data and metadata into one dataframe
-    combined_data = pd.concat([otu_df, metadata], axis=1)
+    # Combine OTU data and metadata
+    data = pd.concat([otu_df, metadata], axis=1)
+    
+    return data
 
-    # Return the separate otu_data, metadata, and combined data
-    return otu_df, metadata, combined_data
