@@ -6,7 +6,7 @@ def extract_features(input_file, output_file):
     # Load the raw microbiome data (abundance counts)
     data = pd.read_csv(input_file, index_col=0)
 
-    # Assuming data has 'SampleID' as index and OTUs as columns
+    # Check the columns and basic info about the data
     print(f"Data columns: {data.columns}")
 
     # Calculate diversity indices (e.g., Shannon, Simpson, Richness)
@@ -28,10 +28,8 @@ def extract_features(input_file, output_file):
     features_scaled = scaler.fit_transform(features)
     features_scaled_df = pd.DataFrame(features_scaled, columns=features.columns, index=features.index)
 
-    # Append the OTU abundances to the feature set
-    features_final = pd.concat([features_scaled_df, data], axis=1)
-
     # Save the extracted features to a CSV file
-    features_final.to_csv(output_file)
+    features_scaled_df.to_csv(output_file)
     print(f"Feature extraction complete. Features saved to {output_file}")
+
 
