@@ -1,32 +1,67 @@
-import pandas as pd
-from .feature_extraction import extract_features
-from .data_processing import load_data, preprocess_data, split_data
+import argparse
+import os
 from .synthetic_data import create_synthetic_data
+from .data_processing import load_data, preprocess_data
+from .feature_extraction import extract_features
 from .classification import train_model, evaluate_model, cross_validate_model
 
 def main():
-    # Check if synthetic data should be generated
-    generate_synthetic = True  # You can replace this with argument parsing logic
+    # Argument parsing
+    parser = argparse.ArgumentParser(description="Microbiome BMI Classifier")
 
-    if generate_synthetic:
+    # Options for generating synthetic data
+    parser.add_argument('--generate-synthetic', action='store_true', help="Generate synthetic data for testing purposes.")
+    
+    # Options for loading real data
+    parser.add_argument('--otu-file', type=str, help="OTU data file (CSV).")
+    parser.add_argument('--metadata-file', type=str, help="Metadata file (CSV).")
+
+    # Model training and evaluation options
+    parser.add_argument('--train', action='store_true', help="Train the model.")
+    parser.add_argument('--evaluate', action='store_true', help="Evaluate the model.")
+    parser.add_argument('--model-file', type=str, help="Path to the trained model for evaluation.")
+    parser.add_argument('--cross-validate', action='store_true', help="Perform cross-validation on the model.")
+
+    parser.add_argument('--output-dir', type=str, default='.', help="Directory to save the output files (default: current directory).")
+    parser.add_argument('--output-file', type=str, default="features.csv", help="Output file for feature extraction.")
+    
+    args = parser.parse_args()
+
+    # Process synthetic or real data
+    if args.generate_synthetic:
         print("Generating synthetic data...")
-        otu_data, metadata = create_synthetic_data()  # Returns OTU data and metadata
-        
-        # Combine OTU data and metadata into a single DataFrame
-        data = pd.concat([otu_data, metadata], axis=1)
+        data = create_synthetic_data()
+    elif args.otu_file and args.metadata_file:
+        print(f"Loading data from {args.otu_file} and {args.metadata_file}...")
+        data = load_data(args.otu_file)
+        metadata = load_data(args.metadata_file)
+        data = preprocess_data(data)
+        data = pd.concat([data, metadata], axis=1)
+    else:
+        print("Error: Either synthetic data generation or OTU and metadata files must be provided.")
+        return
 
-        # Save the combined synthetic data to a CSV file
-        output_file = 'synthetic_data.csv'  # Define your output file name
-        data.to_csv(output_file)
-        print(f"Synthetic data saved to {output_file}")
+    # Feature extraction
+    print("Extracting features...")
+    extract_features(data, args.output_file)
 
-    # After generating and saving synthetic data, proceed with other tasks
-    print("Extracting features from synthetic data...")
-    extract_features('synthetic_data.csv', 'extracted_features.csv')  # Extract features from synthetic data
-    print("Training the model...")
-    train_model('extracted_features.csv')  # Train your model (implement the logic)
-    print("Evaluating the model...")
-    evaluate_model('extracted_features.csv')  # Evaluate your model (implement the logic)
+    # Train model if requested
+    if args.train:
+        print("Training the model...")
+        train_model(args.output_file, 'trained_model.pkl')
 
-if __name__ == "__main__":
+    # Evaluate the model if requested
+    if args.evaluate:
+        print("Evaluating the model...")
+        if not args.model_file:
+            print("Error: Please provide a model file for evaluation.")
+            return
+        evaluate_model(args.output_file, args.model_file)
+
+    # Cross-validation if requested
+    if args.cross_validate:
+        print("Performing cross-validation...")
+        cross_validate_model(args.output_file)
+
+if __name__ == '__main__':
     main()
