@@ -1,26 +1,24 @@
 import argparse
-from microbiome_bmi_classifier.data_processing import load_data
-from microbiome_bmi_classifier.model import classify_bmi
-from microbiome_bmi_classifier.utils import generate_synthetic_data
+from microbiome_bmi_classifier.data_processing import load_data, preprocess_data
+from microbiome_bmi_classifier.feature_extraction import extract_features
+from microbiome_bmi_classifier.classification import model
 
 def main():
-    print("🧪 Welcome to GutCheck!")
+    parser = argparse.ArgumentParser(description="GutCheck: Microbiome BMI Classifier")
+    parser.add_argument("--otu_file", type=str, help="Path to OTU table CSV file")
+    parser.add_argument("--metadata_file", type=str, help="Path to metadata CSV file")
 
-    parser = argparse.ArgumentParser(description="Classify obesity from microbiome data.")
-    parser.add_argument('--otu', type=str, help="Path to OTU table CSV file")
-    parser.add_argument('--meta', type=str, help="Path to metadata CSV file")
     args = parser.parse_args()
 
-    if args.otu and args.meta:
-        print("📂 Loading user-provided data...")
-        X, y = load_data(args.otu, args.meta)
-    else:
-        print("⚠️ No data provided. Generating synthetic data instead...")
-        X, y = generate_synthetic_data()
+    # Load & preprocess
+    data = load_data(args.otu_file, args.metadata_file)
+    data = preprocess_data(data)
 
-    acc, _ = classify_bmi(X, y)
-    print(f"✅ BMI classification complete! Accuracy: {acc:.2f}")
+    # Feature extraction
+    features = extract_features(data)
+
+    # Classification
+    model()
 
 if __name__ == "__main__":
     main()
-
