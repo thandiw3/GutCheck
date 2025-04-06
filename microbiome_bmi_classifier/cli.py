@@ -1,6 +1,7 @@
 import sys
 import os
 import argparse
+import pickle
 from .synthetic_data import generate_synthetic_data
 from .feature_extraction import extract_features
 from .classification import train_model, evaluate_model
