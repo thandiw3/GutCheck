@@ -1,78 +1,55 @@
-import argparse
 import os
-from microbiome_bmi_classifier.data_processing import load_data, preprocess_data, split_data
+import sys
+import argparse
+from microbiome_bmi_classifier.data_preprocess import load_data, preprocess_data, split_data
 from microbiome_bmi_classifier.feature_extraction import extract_features
-from microbiome_bmi_classifier.classification import train_model, evaluate_model
-from microbiome_bmi_classifier.synthetic_data import create_synthetic_data
-import pickle
+from microbiome_bmi_classifier.model import train_model, evaluate_model, save_model
+from microbiome_bmi_classifier.synthetic_data import generate_synthetic_data
 
 def main():
-    # Setup command line argument parser
-    parser = argparse.ArgumentParser(description="GutCheck: Microbiome-based classification tool")
+    parser = argparse.ArgumentParser(description="GutCheck: Microbiome BMI Classifier")
     
-    # Arguments for data processing and model training
-    parser.add_argument('--otu-file', type=str, help="OTU data file (CSV).")
-    parser.add_argument('--metadata-file', type=str, help="Metadata file (CSV).")
-    parser.add_argument('--output-dir', type=str, default='.', help="Directory to save the output files (default: current directory).")
-    parser.add_argument('--train', action='store_true', help="Train the model.")
-    parser.add_argument('--evaluate', action='store_true', help="Evaluate the model.")
-    parser.add_argument('--model-file', type=str, help="Path to the trained model for evaluation.")
-    parser.add_argument('--generate-synthetic', action='store_true', help="Generate synthetic data for testing purposes.")
+    # Optional arguments for file paths
+    parser.add_argument('--otu-file', type=str, help="OTU data file (CSV). If not provided, synthetic data will be generated.")
+    parser.add_argument('--metadata-file', type=str, help="Metadata file (CSV). If not provided, synthetic data will be generated.")
+    parser.add_argument('--output-dir', type=str, default='.', help="Directory to save output files.")
     
-    # Parse arguments
     args = parser.parse_args()
 
-    # Handle synthetic data generation if no input files are provided
-    if args.generate_synthetic:
-        print("Generating synthetic data...")
-        data = create_synthetic_data()
-    elif args.otu_file and args.metadata_file:
-        print(f"Loading OTU data from {args.otu_file} and metadata from {args.metadata_file}...")
-        data = load_data(args.otu_file, args.metadata_file)
+    # If OTU and metadata files are provided, use them. Otherwise, generate synthetic data.
+    if args.otu_file and args.metadata_file:
+        print("Loading real data...")
+        # Load and process real data
+        otu_data = load_data(args.otu_file)
+        metadata = load_data(args.metadata_file)
     else:
-        print("Error: Please provide either input files or use --generate-synthetic.")
-        return
+        print("Generating synthetic data...")
+        # Generate synthetic data for testing
+        otu_data, metadata = generate_synthetic_data()
 
-    # Preprocessing step
-    print("Preprocessing the data...")
-    data = preprocess_data(data)
+    # Preprocess data
+    print("Preprocessing data...")
+    data = preprocess_data(otu_data, metadata)
 
-    # Feature extraction
-    output_file = os.path.join(args.output_dir, 'features.csv')  # Set output file path
-    print(f"Extracting features from the data and saving to {output_file}...")
-    extract_features(data, output_file)  # Pass the output file as argument
+    # Split the data into training and testing sets
+    print("Splitting data...")
+    train_data, test_data = split_data(data)
 
-    # Split data into train and test sets
-    X_train, X_test, y_train, y_test = split_data(data)
+    # Extract features from the data
+    print("Extracting features...")
+    features = extract_features(data)
 
-    # Training the model if --train flag is set
-    if args.train:
-        print("Training the model...")
-        model = train_model(X_train, y_train)
+    # Train the model (default)
+    print("Training the model...")
+    model = train_model(features)
 
-        # Save trained model
-        model_file = os.path.join(args.output_dir, 'trained_model.pkl')
-        with open(model_file, 'wb') as f:
-            pickle.dump(model, f)
-        print(f"Model trained and saved to {model_file}")
+    # Save the trained model
+    print(f"Saving model to {args.output_dir}...")
+    model_file = os.path.join(args.output_dir, 'trained_model.pkl')
+    save_model(model, model_file)
 
-    # Evaluate the model if --evaluate flag is set
-    if args.evaluate:
-        if not args.model_file:
-            print("Error: Please provide the model file path with --model-file for evaluation.")
-            return
+    print(f"Model training completed and saved to {model_file}")
+    print("Process finished successfully!")
 
-        print(f"Evaluating the model from {args.model_file}...")
-        with open(args.model_file, 'rb') as f:
-            model = pickle.load(f)
-        
-        evaluation_results = evaluate_model(model, X_test, y_test)
-        print(f"Evaluation Results: {evaluation_results}")
-        # Optionally save evaluation results to a file
-        with open(os.path.join(args.output_dir, 'evaluation_results.txt'), 'w') as f:
-            f.write(str(evaluation_results))
-        print(f"Evaluation results saved to {os.path.join(args.output_dir, 'evaluation_results.txt')}")
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
-
