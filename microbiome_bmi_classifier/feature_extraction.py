@@ -1,32 +1,36 @@
 import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
 
-def extract_features(data):
-    """
-    Extract statistical features (mean, std, min, max) for each OTU column
-    and include BMI and Label as additional features.
-    """
-    # Ensure that the data only contains numeric values for OTU columns
-    otu_columns = [col for col in data.columns if col.startswith('OTU')]
-    otu_data = data[otu_columns]
+def extract_features(input_file, output_file):
+    # Load the raw microbiome data (abundance counts)
+    data = pd.read_csv(input_file, index_col=0)
 
-    # Convert the OTU data to numeric, coercing any errors (like strings) into NaN
-    otu_data = otu_data.apply(pd.to_numeric, errors='coerce')
+    # Assuming data has 'SampleID' as index and OTUs as columns
+    print(f"Data columns: {data.columns}")
 
-    # Calculate summary statistics for each OTU column
+    # Calculate diversity indices (e.g., Shannon, Simpson, Richness)
+    # Shannon Index (H) = -sum(p * log(p)) for each OTU in a sample
+    # Simpson Index (D) = 1 - sum(p^2) for each OTU in a sample
+    shannon_index = data.apply(lambda x: -np.sum(x * np.log(x + 1e-6)), axis=1)
+    simpson_index = data.apply(lambda x: 1 - np.sum(x**2), axis=1)
+    richness = data.apply(lambda x: np.count_nonzero(x > 0), axis=1)
+
+    # Create a new DataFrame to store features
     features = pd.DataFrame({
-        'mean': otu_data.mean(axis=0),
-        'std': otu_data.std(axis=0),
-        'min': otu_data.min(axis=0),
-        'max': otu_data.max(axis=0)
-    })
+        'Shannon_Index': shannon_index,
+        'Simpson_Index': simpson_index,
+        'Richness': richness
+    }, index=data.index)
 
-    # Add BMI and Label as additional columns to the features DataFrame
-    features['BMI'] = data['BMI'].mean()  # Mean of BMI across samples
-    features['Label'] = data['Label'].mean()  # Mean of Label across samples
+    # Standardize the features (important for models like SVM or logistic regression)
+    scaler = StandardScaler()
+    features_scaled = scaler.fit_transform(features)
+    features_scaled_df = pd.DataFrame(features_scaled, columns=features.columns, index=features.index)
 
-    # Add BMI category based on the average BMI
-    features['BMI_category'] = 'Healthy' if features['BMI'].iloc[0] < 30 else 'Obese'
+    # Append the OTU abundances to the feature set
+    features_final = pd.concat([features_scaled_df, data], axis=1)
 
     # Save the extracted features to a CSV file
-    features.to_csv('extracted_features_synthetic_data.csv')
-    return features
+    features_final.to_csv(output_file)
+    print(f"Feature extraction complete. Features saved to {output_file}")
